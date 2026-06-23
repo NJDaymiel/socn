@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocN</title>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.1.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.1.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
+    <style>
+        /* Strict Monochrome Theme */
+        :root {
+            --bg-color: #f0f2f5; 
+            --text-color: #000000; 
+            --card-bg: #ffffff;
+            --primary: #000000; 
+            --primary-text: #ffffff; 
+            --border: #ccd0d5; 
+            --input-bg: #f0f2f5; 
+            --msg-sent: #e4e6eb; 
+            --msg-recv: #ffffff;
+            --radius: 20px; 
+            --invert-icon: 0; 
+        }
+        [data-theme="dark"] {
+            --bg-color: #121212; 
+            --text-color: #ffffff; 
+            --card-bg: #1e1e1e;
+            --primary: #ffffff; 
+            --primary-text: #000000; 
+            --border: #333333; 
+            --input-bg: #2a2a2a; 
+            --msg-sent: #333333; 
+            --msg-recv: #1e1e1e;
+            --invert-icon: 1; 
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); height: 100vh; display: flex; flex-direction: column; transition: background-color 0.3s, color 0.3s; overflow: hidden; }
+
+        button { cursor: pointer; border: 2px solid var(--primary); border-radius: 50px; padding: 10px 18px; font-weight: bold; background-color: var(--primary); color: var(--primary-text); transition: opacity 0.2s, transform 0.1s; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+        button:hover { opacity: 0.8; }
+        button:active { transform: scale(0.96); }
+        button.ghost { background-color: transparent; color: var(--text-color); border: 2px solid var(--border); }
+        button.ghost:hover { border-color: var(--primary); }
+        
+        .icon-inverted { filter: invert(var(--invert-icon)); width: 20px; height: 20px; }
+
+        input[type="text"], input[type="password"], textarea, select { width: 100%; padding: 14px 18px; margin-bottom: 12px; border-radius: var(--radius); border: 2px solid var(--border); background-color: var(--input-bg); color: var(--text-color); outline: none; transition: border 0.3s; appearance: none; -webkit-appearance: none; }
+        input:focus, textarea:focus, select:focus { border-color: var(--primary); }
+
+        .file-upload-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; margin-bottom: 0; }
+        .file-upload-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%; }
+        .btn-file-upload { display: flex; width: 100%; justify-content: center; align-items: center; gap: 10px; padding: 12px; border: 2px dashed var(--border); border-radius: 50px; font-weight: bold; cursor: pointer; background: var(--input-bg); color: var(--text-color); transition: border-color 0.3s; }
+
+        nav { background-color: var(--card-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: relative; z-index: 100; border-radius: 0 0 20px 20px; border-bottom: 2px solid var(--border); height: 75px; flex-shrink: 0; }
+        .logo { font-size: 26px; font-weight: 900; letter-spacing: 1px; color: var(--text-color); }
+        .hamburger { display: none; font-size: 24px; cursor: pointer; color: var(--text-color); padding: 5px; position: relative; }
+        .badge { position: absolute; top: 0; right: 0; background: red; color: white; border-radius: 50%; font-size: 10px; padding: 2px 6px; font-weight: bold; }
+        
+        .nav-menu { display: flex; gap: 10px; align-items: center; }
+        .nav-links { display: flex; gap: 5px; }
+        .nav-links button { background: transparent; color: var(--text-color); padding: 8px 15px; border-radius: 50px; border: 2px solid transparent; }
+        .nav-links button.active-tab { background: var(--primary); color: var(--primary-text); }
+
+        @media (max-width: 768px) {
+            .hamburger { display: block; }
+            .nav-menu { display: none; flex-direction: column; position: absolute; top: 100%; left: 0; width: 100%; background: var(--card-bg); padding: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-radius: 0 0 20px 20px; border-top: 2px solid var(--border); border-bottom: 2px solid var(--border); z-index: 1000; }
+            .nav-menu.show-menu { display: flex !important; }
+            .nav-links { flex-direction: column; width: 100%; }
+            .nav-links button { width: 100%; justify-content: flex-start; margin-bottom: 5px;}
+            .nav-actions { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        }
+
+        .view { display: none; padding: 10px; max-width: 600px; margin: 0 auto; width: 100%; height: calc(100vh - 75px); overflow-y: auto; position: relative; }
+        .view.active { display: block; }
+        .card { background-color: var(--card-bg); padding: 20px; border-radius: var(--radius); box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 20px; border: 2px solid var(--border); }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; }
+        .modal-content { background: var(--bg-color); width: 90%; max-width: 450px; padding: 25px; border-radius: var(--radius); border: 2px solid var(--border); }
+        
+        #storyOverlayContentWrapper { max-width: 90%; max-height: 90%; position: relative; }
+        #storyOverlayContent { max-width: 100%; max-height: 80vh; border-radius: var(--radius); border: 2px solid var(--border); }
+        #storyOverlayClose { position: absolute; top: -15px; right: -15px; width: 40px; height: 40px; border-radius: 50%; background: var(--bg-color); color: var(--text-color); border: 2px solid var(--border); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10000; }
+
+        #loadingView { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; background: var(--bg-color); position: fixed; width: 100%; z-index: 99999; top: 0; left: 0; }
+        .spinner { border: 4px solid var(--border); border-top: 4px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-top: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .error-box { border-radius: 12px; padding: 12px; margin-bottom: 15px; font-weight: bold; text-align: center; display: none; background: #ffebe8; color: #d32f2f; border: 2px solid #ffcdd2; }
+        #passStrengthContainer { font-size: 13px; font-weight: bold; margin-top: -5px; margin-bottom: 15px; text-align: left; padding-left: 10px; }
+
+        .avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; display: flex; align-items: center; justify-content: center; font-weight: bold; background: var(--primary); color: var(--primary-text); flex-shrink: 0; }
+        .avatar-lg { width: 120px; height: 120px; font-size: 48px; margin: 0 auto 15px auto; cursor: pointer; position: relative; overflow: hidden; border: 4px solid var(--primary); }
+        .user-card { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--input-bg); border-radius: var(--radius); border: 2px solid var(--border); margin-bottom: 10px; }
+
+        /* STRICT TIKTOK FULLSCREEN SHORTS */
+        #shortsView.active { display: block; max-width: 100% !important; padding: 0 !important; height: calc(100vh - 75px) !important; background: #000; }
+        .shorts-viewport { height: 100%; width: 100%; max-width: 500px; margin: 0 auto; overflow-y: scroll; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; position: relative; }
+        .shorts-viewport::-webkit-scrollbar { display: none; }
+        
+        .short-card { position: relative; width: 100%; height: 100%; background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; scroll-snap-align: start; scroll-snap-stop: always; }
+        .short-video { width: 100%; height: 100%; object-fit: contain; cursor: pointer; }
+        
+        .short-overlay { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: flex-end; z-index: 2; }
+        .short-info { padding: 25px 90px 25px 20px; color: white; text-shadow: 1px 1px 4px rgba(0,0,0,0.9); pointer-events: auto; background: linear-gradient(transparent, rgba(0,0,0,0.85)); }
+        
+        .short-actions-right { position: absolute; right: 15px; bottom: 40px; display: flex; flex-direction: column; gap: 22px; align-items: center; pointer-events: auto; z-index: 5; }
+        .short-btn { background: none; border: none; color: white; font-size: 30px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); padding: 0; width: 55px; }
+        .short-btn-text { font-size: 12px; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.9); }
+        .short-active-heart { color: #fe2c55; }
+        .short-active-fav { color: #f5c33b; }
+        
+        .shorts-fab { position: absolute; bottom: 30px; left: 20px; width: 55px; height: 55px; border-radius: 50%; background: #ffffff; color: #000000; font-size: 22px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.4); z-index: 10; border: none; cursor: pointer; }
+
+        .short-comment-panel { position: absolute; bottom: -100%; left: 0; width: 100%; height: 60%; background: var(--card-bg); border-radius: 24px 24px 0 0; padding: 20px; display: flex; flex-direction: column; z-index: 20; color: var(--text-color); border-top: 2px solid var(--border); transition: bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: auto; }
+        .short-comment-panel.open { bottom: 0; }
+
+        /* Feed Elements */
+        .post-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; position: relative; }
+        .post-menu { display: none; position: absolute; right: 0; top: 40px; background: var(--card-bg); border: 2px solid var(--border); border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 50; overflow: hidden; min-width: 160px; }
+        .post-menu.show { display: block; }
+        .post-menu-item { padding: 12px 20px; font-weight: bold; cursor: pointer; border-bottom: 1px solid var(--border); text-align: left; }
+        .post-menu-item:hover { background: var(--input-bg); }
+        .post-menu-item.danger { color: #d32f2f; }
+
+        .post-media { max-width: 100%; max-height: 450px; border-radius: 16px; margin-top: 15px; display: block; object-fit: cover; border: 2px solid var(--border);}
+        .reaction-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 15px; border-top: 2px solid var(--border); }
+        .reaction-container { position: relative; display: inline-block; }
+        .reaction-popover { display: none; position: absolute; bottom: 130%; left: 0; background: var(--card-bg); border-radius: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); padding: 10px 15px; gap: 12px; z-index: 100; border: 2px solid var(--border); }
+        .reaction-container:hover .reaction-popover { display: flex; }
+        .reaction-emoji { cursor: pointer; font-size: 26px; transition: transform 0.2s; }
+        .reaction-emoji:hover { transform: scale(1.3) translateY(-5px); }
+
+        .feed-comments-container { margin-top: 15px; }
+        .feed-comment-list { display: flex; flex-direction: column; gap: 8px; }
+        .feed-comment-hidden { display: none; }
+        .view-all-btn { background: none; border: none; color: gray; font-size: 13px; font-weight: bold; padding: 5px 0; cursor: pointer; width: auto; justify-content: flex-start; }
+
+        .profile-filters { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .pill { padding: 10px 20px; border-radius: 50px; background: transparent; color: var(--text-color); cursor: pointer; font-size: 14px; font-weight: bold; border: 2px solid var(--primary); transition: all 0.2s; }
+        .pill.active { background: var(--primary); color: var(--primary-text); }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; border-radius: var(--radius); overflow: hidden; border: 2px solid var(--border); }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: var(--input-bg); font-weight: bold; color: var(--text-color); }
+        
+        .chat-container { display: flex; height: 100%; gap: 10px; flex-direction: column; }
+        .chat-list { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; }
+        .chat-user { padding: 10px 20px; background: var(--card-bg); border-radius: 50px; border: 2px solid var(--border); cursor: pointer; white-space: nowrap; font-weight: bold; }
+        .chat-window { flex: 1; background: var(--card-bg); border-radius: var(--radius); border: 2px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-color: var(--input-bg); }
+        .msg { max-width: 75%; padding: 12px 16px; word-wrap: break-word; font-size: 14px; border-radius: 20px; border: 2px solid var(--border); }
+        .msg.sent { align-self: flex-end; background-color: var(--primary); color: var(--primary-text); border-bottom-right-radius: 5px; }
+        .msg.recv { align-self: flex-start; background-color: var(--card-bg); color: var(--text-color); border-bottom-left-radius: 5px; }
+
+        .stories-container { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; }
+        .story { width: 100px; height: 150px; border-radius: var(--radius); background-color: var(--card-bg); flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; cursor: pointer; border: 2px solid var(--border); overflow: hidden; position: relative; }
+        .story img, .story video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+        .story .story-author { position: absolute; bottom: 5px; left: 5px; z-index: 2; font-size: 11px; background: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 10px; font-weight: bold; }
+        .add-story { border: 2px dashed var(--primary); color: var(--text-color); font-weight: bold; background: transparent; }
+    </style>
+</head>
+<body>
+    
+    <!-- LOADING SCREEN -->
+    <div id="loadingView">
+        <h1 style="font-size: 42px; font-weight: 900; color: var(--text-color);">SocN</h1>
+        <div class="spinner"></div>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav id="mainNav" style="display: none;">
+        <div class="logo">SocN</div>
+        <div class="hamburger" onclick="document.getElementById('navMenu').classList.toggle('show-menu')">
+            <i class="fi fi-rr-menu-burger"></i>
+            <span class="badge hidden" id="mobileNotifBadge">!</span>
+        </div>
+        
+        <div id="navMenu" class="nav-menu">
+            <div class="nav-links">
+                <button type="button" id="tab-feed" class="active-tab" onclick="switchTab('feed')"><i class="fi fi-rr-home"></i> Feed</button>
+                <button type="button" id="tab-search" onclick="switchTab('search')"><i class="fi fi-rr-search"></i> Search</button>
+                <button type="button" id="tab-shorts" onclick="switchTab('shorts')"><i class="fi fi-rr-play"></i> Shorts</button>
+                <button type="button" id="tab-profile" onclick="switchTab('profile')"><i class="fi fi-rr-user"></i> Profile</button>
+                <button type="button" id="tab-chat" onclick="switchTab('chat')"><i class="fi fi-rr-comment"></i> Chat</button>
+                <button type="button" id="tab-notifications" onclick="switchTab('notifications')" style="position:relative;">
+                    <i class="fi fi-rr-bell"></i> Alerts <span class="badge hidden" id="desktopNotifBadge">0</span>
+                </button>
+                <button type="button" id="tab-admin" style="display: none;" onclick="switchTab('admin')"><i class="fi fi-rr-shield"></i> Admin</button>
+            </div>
+            <div class="nav-actions">
+                <button type="button" class="ghost" onclick="toggleTheme()"><i class="fi fi-rr-moon"></i></button>
+                <button type="button" class="ghost" onclick="logout()"><i class="fi fi-rr-exit"></i> Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- PROPER STORY OVERLAY -->
+    <div id="storyOverlay" class="modal-overlay">
+        <div id="storyOverlayContentWrapper">
+            <button type="button" id="storyOverlayClose" onclick="closeStory()"><i class="fi fi-rr-cross"></i></button>
+            <div id="storyMediaContainer"></div>
+        </div>
+    </div>
+
+    <!-- SHORTS UPLOAD MODAL -->
+    <div id="shortUploadModal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="font-size: 20px;">Create Short</h2>
+                <button type="button" class="modal-close-btn" onclick="document.getElementById('shortUploadModal').style.display='none'"><i class="fi fi-rr-cross"></i></button>
+            </div>
+            <div class="file-upload-wrapper" style="margin-bottom:15px;">
+                <div class="btn-file-upload" id="shortFileBtnText"><i class="fi fi-rr-video-camera"></i> Select Video</div>
+                <input type="file" id="shortUploadInput" accept="video/*" onchange="document.getElementById('shortFileBtnText').innerHTML = '<i class=\'fi fi-rr-check\'></i> Video Selected'">
+            </div>
+            <textarea id="shortCaption" placeholder="Write a caption..." rows="3"></textarea>
+            <select id="shortVisibility">
+                <option value="public">Public</option>
+                <option value="friends">Friends Only</option>
+                <option value="private">Private</option>
+            </select>
+            <button type="button" onclick="uploadShort()" style="width:100%;"><i class="fi fi-rr-upload"></i> Post Short</button>
+        </div>
+    </div>
+
+    <!-- AUTH VIEWS -->
+    <div id="loginView" class="view" style="margin-top: 50px;">
+        <div class="card">
+            <h2 style="text-align: center; margin-bottom: 25px; color: var(--text-color);">Welcome Back</h2>
+            <div id="loginError" class="error-box"></div>
+            <form onsubmit="event.preventDefault(); login();">
+                <input type="text" id="logUser" placeholder="Username">
+                <input type="password" id="logPass" placeholder="Password">
+                <button type="submit" style="width: 100%; margin-bottom: 20px; font-size: 16px; padding: 12px;">Log In</button>
+            </form>
+            <div style="text-align: center; margin-bottom: 20px; color: gray; font-size: 14px; font-weight: bold;">OR</div>
+            <button type="button" onclick="switchAuthView('registerView')" class="ghost" style="width: 100%; font-size: 16px; padding: 12px;">Create New Account</button>
+        </div>
+    </div>
+
+    <div id="registerView" class="view" style="margin-top: 50px;">
+        <div class="card">
+            <h2 style="text-align: center; margin-bottom: 25px;">Join SocN</h2>
+            <div id="regError" class="error-box"></div>
+            <form onsubmit="event.preventDefault(); submitRegister();">
+                <input type="text" id="regUser" placeholder="Choose Username">
+                <input type="password" id="regPass" placeholder="Choose Password" oninput="checkPasswordStrength()">
+                <div id="passStrengthContainer"></div>
+                <input type="password" id="regPass2" placeholder="Confirm Password">
+                
+                <div style="display:flex; gap:10px; font-weight:bold; font-size:14px; margin-bottom:15px; align-items:center;">
+                    <input type="checkbox" id="termsCheck" style="width:auto; margin:0; transform:scale(1.2);">
+                    <label>I agree to <span style="text-decoration:underline; cursor:pointer;" onclick="switchAuthView('termsView')">Terms & Conditions</span></label>
+                </div>
+
+                <button type="submit" style="width: 100%; margin-bottom: 15px; font-size: 16px; padding: 12px;">Sign Up</button>
+            </form>
+            <button type="button" onclick="switchAuthView('loginView')" class="ghost" style="width: 100%;">Back to Log In</button>
+        </div>
+    </div>
+
+    <div id="termsView" class="view" style="margin-top: 20px;">
+        <div class="card">
+            <h2 style="margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 10px;">Terms & Conditions</h2>
+            <div style="font-size: 14px; line-height: 1.6; margin-bottom: 25px;">
+                <p><strong>1. Acceptance</strong><br>By creating an account on SocN, you agree to abide by all platform rules. We log device and IP data for security.</p><br>
+                <p><strong>2. Content Policy</strong><br>All media uploaded must adhere to community guidelines. Admins can delete violating content and Ban users.</p><br>
+            </div>
+            <button type="button" onclick="acceptTermsAndGoBack()" style="width: 100%;">I Understand & Accept</button>
+        </div>
+    </div>
+
+    <!-- MAIN VIEWS -->
+    <div id="feedView" class="view">
+        <div class="stories-container">
+            <div class="story add-story file-upload-wrapper" style="border:none; background:transparent;">
+                <div class="btn-file-upload" style="flex-direction:column; padding:0; height:100%; border: 2px dashed var(--primary); background:transparent;">
+                    <div style="font-size:35px; margin-bottom:5px;"><i class="fi fi-rr-add"></i></div>
+                    <div style="font-size: 12px;">Create</div>
+                </div>
+                <input type="file" accept="image/*,video/*" onchange="uploadStory(event)">
+            </div>
+            <div id="dynamicStories" style="display:flex; gap:10px;"></div>
+        </div>
+        
+        <div class="card">
+            <textarea id="postContent" rows="3" placeholder="What's on your mind?"></textarea>
+            <div style="display: flex; gap: 10px; align-items: center; justify-content: space-between;">
+                <div class="file-upload-wrapper" style="flex:1;">
+                    <div class="btn-file-upload" id="postFileBtnText" style="padding: 10px;"><i class="fi fi-rr-picture"></i> Attach Media</div>
+                    <input type="file" id="mediaInput" accept="image/*,video/*" onchange="document.getElementById('postFileBtnText').innerHTML = '<i class=\'fi fi-rr-check\'></i> Attached'">
+                </div>
+                <button type="button" onclick="createPost()" style="flex:1; padding: 10px;"><i class="fi fi-rr-paper-plane"></i> Post</button>
+            </div>
+        </div>
+        <div id="feedContainer"></div>
+    </div>
+
+    <div id="searchView" class="view">
+        <div class="card">
+            <h2 style="margin-bottom: 15px;"><i class="fi fi-rr-search"></i> Find Friends</h2>
+            <form onsubmit="event.preventDefault();">
+                <input type="text" id="searchInput" placeholder="Search usernames..." onkeyup="renderSearch()">
+            </form>
+        </div>
+        <div id="searchResults"></div>
+    </div>
+
+    <div id="notificationsView" class="view">
+        <div class="card">
+            <h2 style="margin-bottom: 15px;"><i class="fi fi-rr-bell"></i> Notifications</h2>
+            <div id="notifContainer"></div>
+        </div>
+    </div>
+
+    <!-- EXACT TIKTOK VIEWPORT STRUCTURING -->
+    <div id="shortsView" class="view">
+        <div class="shorts-viewport" id="shortsContainer" onscroll="handleShortsScroll()"></div>
+        <button type="button" class="shorts-fab" onclick="document.getElementById('shortUploadModal').style.display='flex'">
+            <i class="fi fi-rr-plus"></i>
+        </button>
+    </div>
+
+    <div id="profileView" class="view">
+        <div class="card" style="text-align:center;">
+            <div class="file-upload-wrapper" style="width:auto;">
+                <div id="profPic" class="avatar avatar-lg">U</div>
+                <input type="file" accept="image/*" onchange="uploadAvatar(event)">
+            </div>
+            <h2 id="profName">User</h2>
+            
+            <div class="profile-filters" style="margin-top: 25px;">
+                <div class="pill active" id="profTab-posts" onclick="setProfileTab('posts')">Posts</div>
+                <div class="pill" id="profTab-friends" onclick="setProfileTab('friends')">Friends</div>
+                <div class="pill" id="profTab-liked" onclick="setProfileTab('liked')">Liked Shorts</div>
+            </div>
+        </div>
+        <div id="profileContainer"></div>
+    </div>
+
+    <div id="chatView" class="view">
+        <div class="chat-container">
+            <div class="chat-list" id="chatUserList"></div>
+            <div class="chat-window">
+                <div style="padding: 15px; font-weight: bold; border-bottom: 2px solid var(--border);" id="chatTargetName">
+                    Select a friend to chat
+                </div>
+                <div class="chat-messages" id="chatMessages"></div>
+                <form onsubmit="event.preventDefault(); sendMessage();" style="padding: 15px; display: flex; gap: 10px; border-top: 2px solid var(--border); background: var(--card-bg);">
+                    <input type="text" id="chatInput" placeholder="Message..." style="margin:0;" disabled>
+                    <button type="submit" id="chatSendBtn" disabled><i class="fi fi-rr-paper-plane"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminView" class="view">
+        <div class="card" style="overflow-x: auto;">
+            <h2 style="margin-bottom: 15px;"><i class="fi fi-rr-shield" style="color: var(--text-color);"></i> System DB & Reports</h2>
+            
+            <h3 style="margin-top:20px; border-bottom:1px solid var(--border); padding-bottom:5px;">Users</h3>
+            <table>
+                <thead><tr><th>User</th><th>Device</th><th>Action</th></tr></thead>
+                <tbody id="adminTableBody"></tbody>
+            </table>
+
+            <h3 style="margin-top:30px; border-bottom:1px solid var(--border); padding-bottom:5px;">Reports</h3>
+            <table>
+                <thead><tr><th>Reported By</th><th>Post ID</th><th>Reason</th></tr></thead>
+                <tbody id="adminReportsBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let currentChatUser = null;
+        let currentProfileTab = 'posts';
+        let globalDB = { users: [], posts: [], stories: [], messages: [], shorts: [], reports: [] };
+        let isPasswordStrong = false;
+
+        const reactMap = {
+            like: { text: 'Like', emoji: '👍', iconSVG: `<i class="fi fi-sr-thumbs-up" style="font-size:18px;"></i>` },
+            heart: { text: 'Love', emoji: '❤️', iconSVG: `<i class="fi fi-sr-heart" style="font-size:18px;"></i>` },
+            laugh: { text: 'Haha', emoji: '😂', iconSVG: '😂' },
+            angry: { text: 'Angry', emoji: '😡', iconSVG: '😡' },
+            sad: { text: 'Sad', emoji: '😢', iconSVG: '😢' },
+            tongue: { text: '😝', emoji: '😝', iconSVG: '😝' }
+        };
+
+        function applySavedTheme() {
+            const savedTheme = localStorage.getItem('socnTheme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+        }
+
+        function toggleTheme() {
+            const b = document.body;
+            const newTheme = b.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            b.setAttribute('data-theme', newTheme);
+            localStorage.setItem('socnTheme', newTheme);
+        }
+
+        function getDeviceInfo() {
+            const ua = navigator.userAgent;
+            if (/android/i.test(ua)) return "Android";
+            if (/iPad|iPhone|iPod/.test(ua)) return "iOS";
+            return "PC distributions";
+        }
+
+        function checkPasswordStrength() {
+            const p = document.getElementById('regPass').value;
+            const indicator = document.getElementById('passStrengthContainer');
+            if (p.length === 0) { indicator.innerText = ''; isPasswordStrong = false; return; }
+            let s = 0;
+            if (p.length >= 6) s++;
+            if (/[A-Z]/.test(p)) s++;
+            if (/[0-9]/.test(p)) s++;
+            if (/[^A-Za-z0-9]/.test(p)) s++;
+
+            if (s <= 1) { indicator.innerHTML = '<span style="color:#d32f2f;">Weak ❌</span>'; isPasswordStrong = false; }
+            else if (s === 2 || s === 3) { indicator.innerHTML = '<span style="color:#f57c00;">Moderate ⚠️</span>'; isPasswordStrong = true; }
+            else { indicator.innerHTML = '<span style="color:#388e3c;">Strong ✅</span>'; isPasswordStrong = true; }
+        }
+
+        window.onload = async () => {
+            applySavedTheme();
+            const savedSession = localStorage.getItem('socnSession');
+            if (savedSession) {
+                const creds = JSON.parse(savedSession);
+                await performLogin(creds.username, creds.password, true);
+            } else {
+                document.getElementById('loadingView').style.display = 'none';
+                document.getElementById('loginView').classList.add('active');
+            }
+        };
+
+        function switchAuthView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active-tab'));
+            document.getElementById(tab + 'View').classList.add('active');
+            if(document.getElementById('tab-'+tab)) document.getElementById('tab-'+tab).classList.add('active-tab');
+            document.getElementById('navMenu').classList.remove('show-menu'); 
+            
+            localStorage.setItem('socnCurrentTab', tab);
+
+            // Global clip execution reset on view escape
+            if (tab !== 'shorts') {
+                document.querySelectorAll('.short-video').forEach(v => v.pause());
+            }
+
+            if(tab === 'feed') { renderStories(); renderFeed(); }
+            if(tab === 'search') renderSearch();
+            if(tab === 'shorts') { renderShorts(); setTimeout(handleShortsScroll, 200); }
+            if(tab === 'profile') renderProfile();
+            if(tab === 'chat') renderChat();
+            if(tab === 'notifications') renderNotifs();
+            if(tab === 'admin') renderAdmin();
+        }
+
+        function getAvatarHTML(username, lg = false) {
+            const u = globalDB.users.find(x => x.username === username);
+            const classes = lg ? 'avatar avatar-lg' : 'avatar';
+            if (u && u.avatar) return `<img src="${u.avatar}" class="${classes}">`;
+            return `<div class="${classes}">${username.charAt(0).toUpperCase()}</div>`;
+        }
+
+        async function fetchDB() {
+            try {
+                const res = await fetch('/api/data');
+                globalDB = await res.json();
+                if (currentUser) {
+                    currentUser = globalDB.users.find(u => u.username === currentUser.username) || currentUser;
+                    updateNotifBadge();
+
+                    // PROTECT ACTIVE INPUT TYPING FOCUS
+                    const activeEl = document.activeElement;
+                    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+                        // Safe update subparts without overriding focused inputs
+                        if (document.getElementById('shortsView').classList.contains('active')) renderShorts();
+                        if (document.getElementById('chatView').classList.contains('active')) renderMessages();
+                        return; 
+                    }
+
+                    if (document.getElementById('feedView').classList.contains('active')) { renderFeed(); renderStories(); }
+                    if (document.getElementById('shortsView').classList.contains('active')) renderShorts();
+                    if (document.getElementById('profileView').classList.contains('active')) renderProfile();
+                    if (document.getElementById('chatView').classList.contains('active')) renderChat();
+                    if (document.getElementById('notificationsView').classList.contains('active')) renderNotifs();
+                    if (document.getElementById('adminView').classList.contains('active')) renderAdmin();
+                }
+            } catch (err) {}
+        }
+        setInterval(fetchDB, 3000);
+
+        function updateNotifBadge() {
+            const count = currentUser.notifications ? currentUser.notifications.length : 0;
+            const b1 = document.getElementById('desktopNotifBadge');
+            const b2 = document.getElementById('mobileNotifBadge');
+            if(count > 0) {
+                b1.classList.remove('hidden'); b2.classList.remove('hidden');
+                b1.innerText = count;
+            } else {
+                b1.classList.add('hidden'); b2.classList.add('hidden');
+            }
+        }
+
+        function acceptTermsAndGoBack() { document.getElementById('termsCheck').checked = true; switchAuthView('registerView'); }
+
+        async function submitRegister() {
+            const u = document.getElementById('regUser').value.trim();
+            const p1 = document.getElementById('regPass').value;
+            const isAgreed = document.getElementById('termsCheck').checked;
+            if(!u || !p1 || !isAgreed || !isPasswordStrong) return;
+
+            await fetch('/api/register', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p1, device: getDeviceInfo()}) });
+            switchAuthView('loginView');
+        }
+
+        async function login() {
+            await performLogin(document.getElementById('logUser').value.trim(), document.getElementById('logPass').value, false);
+        }
+
+        async function performLogin(username, password, isAutoLogin) {
+            try {
+                const res = await fetch('/api/login', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username, password, device: getDeviceInfo()}) });
+                const data = await res.json();
+                if (data.success) {
+                    currentUser = data.user;
+                    localStorage.setItem('socnSession', JSON.stringify({username, password}));
+                    await fetchDB();
+                    document.getElementById('loadingView').style.display = 'none';
+                    document.getElementById('mainNav').style.display = 'flex';
+                    if (currentUser.role === 'admin') document.getElementById('tab-admin').style.display = 'block';
+                    switchTab(localStorage.getItem('socnCurrentTab') || 'feed');
+                } else { handleLoginFailure(data.error, isAutoLogin); }
+            } catch(e) { handleLoginFailure("Connection broken", isAutoLogin); }
+        }
+
+        function handleLoginFailure(msg, isAutoLogin) {
+            localStorage.removeItem('socnSession');
+            document.getElementById('loadingView').style.display = 'none';
+            switchAuthView('loginView');
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.clear();
+            document.getElementById('mainNav').style.display = 'none';
+            switchAuthView('loginView');
+        }
+
+        async function sendFriendRequest(targetUser) {
+            await fetch('/api/friend_action', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ from: currentUser.username, to: targetUser, action: 'request' }) });
+            alert("Request Sent!");
+            fetchDB();
+        }
+
+        async function respondToRequest(notifId, fromUser, action) {
+            await fetch('/api/friend_action', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ from: fromUser, to: currentUser.username, action: action, notifId: notifId }) });
+            fetchDB();
+        }
+
+        function renderSearch() {
+            const q = document.getElementById('searchInput').value.trim().toLowerCase();
+            const container = document.getElementById('searchResults');
+            if(!q) { container.innerHTML = ''; return; }
+            const results = globalDB.users.filter(u => u.username !== currentUser.username && u.username.toLowerCase().includes(q) && u.role !== 'admin');
+            container.innerHTML = results.map(u => `
+                <div class="user-card">
+                    <div style="display:flex; align-items:center; gap:10px; font-weight:bold;">${getAvatarHTML(u.username)} ${u.username}</div>
+                    <button type="button" onclick="sendFriendRequest('${u.username}')">Add Friend</button>
+                </div>`).join('');
+        }
+
+        function renderNotifs() {
+            const container = document.getElementById('notifContainer');
+            if(!currentUser.notifications || currentUser.notifications.length === 0) { container.innerHTML = '<p style="text-align:center;">No alerts.</p>'; return; }
+            container.innerHTML = currentUser.notifications.map(n => `
+                <div class="user-card" style="flex-direction:column; align-items:flex-start; gap:10px;">
+                    <div><b>${n.text}</b></div>
+                    <div style="display:flex; gap:10px; width:100%;">
+                        <button type="button" style="flex:1;" onclick="respondToRequest('${n.id}', '${n.from}', 'accept')">Accept</button>
+                        <button type="button" class="ghost" style="flex:1;" onclick="respondToRequest('${n.id}', '${n.from}', 'decline')">Decline</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        // --- TIKTOK STYLE ENGINE & SWIPE SCROLL ALGORITHM ---
+        function handleShortsScroll() {
+            const container = document.getElementById('shortsContainer');
+            if (!container) return;
+            const cards = container.querySelectorAll('.short-card');
+            const containerCenter = container.scrollTop + (container.clientHeight / 2);
+            
+            cards.forEach(card => {
+                const video = card.querySelector('.short-video');
+                if (!video) return;
+                const cardTop = card.offsetTop;
+                const cardBottom = cardTop + card.clientHeight;
+                
+                if (containerCenter >= cardTop && containerCenter <= cardBottom) {
+                    if (video.paused) {
+                        video.play().catch(() => {});
+                    }
+                } else {
+                    video.pause();
+                }
+            });
+        }
+
+        function buildShortOverlayHTML(short) {
+            const hasHeart = short.hearts && short.hearts[currentUser.username];
+            const hasFav = short.favorites && short.favorites[currentUser.username];
+            const commentsHTML = (short.comments || []).map(c => `
+                <div style="margin-bottom:12px; display:flex; gap:10px; align-items:center;">
+                    ${getAvatarHTML(c.author)}<div><b>${c.author}</b><br>${c.text}</div>
+                </div>`).join('');
+
+            return `
+                <div class="short-info">
+                    <h3 style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">${getAvatarHTML(short.author)} @${short.author}</h3>
+                    <p>${short.caption || ''}</p>
+                </div>
+                <div class="short-actions-right">
+                    <button type="button" class="short-btn ${hasHeart ? 'short-active-heart' : ''}" onclick="interactShort('${short.id}', 'hearts')">
+                        <i class="fi fi-sr-heart"></i>
+                        <span class="short-btn-text">${Object.keys(short.hearts||{}).length}</span>
+                    </button>
+                    <button type="button" class="short-btn" onclick="toggleShortComments('${short.id}')">
+                        <i class="fi fi-sr-comment-alt"></i>
+                        <span class="short-btn-text">${(short.comments||[]).length}</span>
+                    </button>
+                    <button type="button" class="short-btn ${hasFav ? 'short-active-fav' : ''}" onclick="interactShort('${short.id}', 'favorites')">
+                        <i class="fi fi-sr-bookmark"></i>
+                        <span class="short-btn-text">${Object.keys(short.favorites||{}).length}</span>
+                    </button>
+                    <button type="button" class="short-btn" onclick="copyLink('${short.id}')">
+                        <i class="fi fi-sr-share"></i>
+                        <span class="short-btn-text">Share</span>
+                    </button>
+                </div>
+                <div class="short-comment-panel" id="short-comments-${short.id}">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:15px; border-bottom:2px solid var(--border); padding-bottom:10px;">
+                        <h3>Comments</h3>
+                        <button type="button" class="ghost" onclick="toggleShortComments('${short.id}')" style="padding:5px; border:none;"><i class="fi fi-rr-cross"></i></button>
+                    </div>
+                    <div id="short-comments-list-${short.id}" style="flex:1; overflow-y:auto; margin-bottom:10px;">${commentsHTML}</div>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="short-comment-input-${short.id}" placeholder="Add a comment..." style="margin:0;">
+                        <button type="button" onclick="addShortComment('${short.id}')"><i class="fi fi-rr-paper-plane"></i></button>
+                    </div>
+                </div>`;
+        }
+
+        function renderShorts() {
+            const container = document.getElementById('shortsContainer');
+            if(!globalDB.shorts) return;
+            
+            // SYSTEMATIC RECOMMENDATION ENGAGEMENT WEIGHT ALGORITHM
+            const algorithmicShorts = [...globalDB.shorts].sort((a, b) => {
+                const scoreA = (Object.keys(a.hearts || {}).length * 3) + (Object.keys(a.favorites || {}).length * 5) + ((currentUser.friends || []).includes(a.author) ? 100 : 0);
+                const scoreB = (Object.keys(b.hearts || {}).length * 3) + (Object.keys(b.favorites || {}).length * 5) + ((currentUser.friends || []).includes(b.author) ? 100 : 0);
+                return scoreB - scoreA; 
+            });
+
+            algorithmicShorts.forEach(short => {
+                let shortEl = document.getElementById(`shortsContainer-short-${short.id}`);
+                if (!shortEl) {
+                    const temp = document.createElement('div');
+                    temp.innerHTML = `
+                        <div class="short-card" id="shortsContainer-short-${short.id}">
+                            <video src="${short.media}" class="short-video" loop onclick="playPauseShort(this)"></video>
+                            <div class="short-overlay" id="shortsContainer-overlay-${short.id}">${buildShortOverlayHTML(short)}</div>
+                        </div>`;
+                    container.appendChild(temp.firstElementChild);
+                } else {
+                    const overlay = document.getElementById(`shortsContainer-overlay-${short.id}`);
+                    if(overlay) {
+                        const panel = document.getElementById(`short-comments-${short.id}`);
+                        const isPanelOpen = panel ? panel.classList.contains('open') : false;
+                        overlay.innerHTML = buildShortOverlayHTML(short);
+                        if(isPanelOpen) document.getElementById(`short-comments-${short.id}`).classList.add('open');
+                    }
+                }
+            });
+        }
+
+        // --- POST ENGINE ---
+        async function createPost(sharedText = null) {
+            const text = sharedText ? sharedText : document.getElementById('postContent').value.trim();
+            const file = document.getElementById('mediaInput').files[0];
+            if (!text && !file) return;
+
+            let mediaBase64 = null, mediaType = null;
+            if (file) {
+                mediaType = file.type;
+                mediaBase64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
+            }
+            await fetch('/api/post', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ author: currentUser.username, text, media: mediaBase64, mediaType }) });
+            document.getElementById('postContent').value = '';
+            document.getElementById('postFileBtnText').innerHTML = '<i class="fi fi-rr-picture"></i> Attach Media';
+            fetchDB();
+        }
+
+        async function actionPost(postId, action) {
+            if(action === 'delete') {
+                await fetch('/api/delete_post', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ postId, username: currentUser.username }) });
+            } else if (action === 'report') {
+                await fetch('/api/report', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ postId, username: currentUser.username }) });
+            } else if (action === 'repost') {
+                const post = globalDB.posts.find(p => p.id === postId);
+                if(post) createPost(`🔁 Reposted @${post.author}: ${post.text || ''}`);
+            }
+            fetchDB();
+        }
+
+        function buildPostHTML(post, containerId) {
+            let m = '';
+            if (post.media) m = post.mediaType.startsWith('image') ? `<img src="${post.media}" class="post-media">` : `<video src="${post.media}" class="post-media" controls></video>`;
+            const visIcon = post.visibility === 'private' ? '<i class="fi fi-rr-lock"></i> Private' : '<i class="fi fi-rr-globe"></i> Public';
+            const isOwner = currentUser.username === post.author;
+
+            const myR = post.reactions ? post.reactions[currentUser.username] : null;
+            let currentReactionHtml = `<span style="font-size:18px; margin-right:5px;"><i class="fi fi-rr-thumbs-up"></i></span> React`;
+            if (myR) {
+                const mapData = reactMap[myR];
+                currentReactionHtml = `<span style="font-size:18px; margin-right:5px; display:flex; align-items:center;">${mapData.iconSVG || mapData.emoji}</span> <span style="color:var(--text-color); font-weight:bold;">${mapData.text}</span>`;
+            }
+
+            const comments = post.comments || [];
+            let commentHTML = comments.length > 0 ? `<div class="comment" style="display:flex; gap:10px; align-items:center; background:var(--input-bg); padding:10px; border-radius:12px;">${getAvatarHTML(comments[0].author)} <div><b>${comments[0].author}</b><br>${comments[0].text}</div></div>` : '';
+
+            return `
+            <div class="card" id="${containerId}-post-${post.id}">
+                <div class="post-header">
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        ${getAvatarHTML(post.author)}
+                        <div><b>${post.author}</b><div style="font-size:12px; color:gray;">${visIcon}</div></div>
+                    </div>
+                    <button type="button" class="ghost" onclick="togglePostMenu('${post.id}')" style="padding:8px; border:none;"><i class="fi fi-rr-menu-dots-vertical"></i></button>
+                    <div class="post-menu" id="post-menu-${post.id}">
+                        <div class="post-menu-item" onclick="actionPost('${post.id}', 'repost')">Repost</div>
+                        ${isOwner ? `<div class="post-menu-item danger" onclick="actionPost('${post.id}', 'delete')">Delete</div>` : `<div class="post-menu-item danger" onclick="actionPost('${post.id}', 'report')">Report</div>`}
+                    </div>
+                </div>
+                <div>${post.text || ''}</div>
+                ${m}
+                <div class="reaction-bar">
+                    <div class="reaction-container">
+                        <button type="button" class="ghost" style="border:none; padding:5px 10px;">${currentReactionHtml}</button>
+                        <div class="reaction-popover">
+                            <span class="reaction-emoji" onclick="reactPost('${post.id}', 'like')">${reactMap.like.iconSVG}</span>
+                            <span class="reaction-emoji" onclick="reactPost('${post.id}', 'heart')">${reactMap.heart.iconSVG}</span>
+                            <span class="reaction-emoji" onclick="reactPost('${post.id}', 'laugh')">😂</span>
+                            <span class="reaction-emoji" onclick="reactPost('${post.id}', 'angry')">😡</span>
+                        </div>
+                    </div>
+                    <span style="font-size:13px; font-weight:bold; color:gray;">${Object.keys(post.reactions || {}).length} Reactions</span>
+                </div>
+                <div class="feed-comments-container">
+                    <div class="feed-comment-list">${commentHTML}</div>
+                    <form onsubmit="event.preventDefault(); addComment('${post.id}', '${containerId}');" style="display:flex; gap:10px; margin-top:10px;">
+                        <input type="text" id="${containerId}_comment_${post.id}" placeholder="Write a comment..." style="margin:0; padding:10px;">
+                        <button type="submit"><i class="fi fi-rr-paper-plane"></i></button>
+                    </form>
+                </div>
+            </div>`;
+        }
+
+        function renderPostList(containerId, postsArray) {
+            const container = document.getElementById(containerId);
+            postsArray.forEach(post => {
+                let postEl = document.getElementById(`${containerId}-post-${post.id}`);
+                if (!postEl) {
+                    const temp = document.createElement('div');
+                    temp.innerHTML = buildPostHTML(post, containerId);
+                    container.appendChild(temp.firstElementChild);
+                } else {
+                    // Update layout metrics safely only if not typing inside it
+                    if (document.activeElement.id !== `${containerId}_comment_${post.id}`) {
+                        const temp = document.createElement('div');
+                        temp.innerHTML = buildPostHTML(post, containerId);
+                        postEl.replaceWith(temp.firstElementChild);
+                    }
+                }
+            });
+        }
+
+        function renderFeed() {
+            const vPosts = globalDB.posts.filter(p => p.visibility !== 'private' || p.author === currentUser.username);
+            renderPostList('feedContainer', vPosts);
+        }
+
+        async function uploadAvatar(e) {
+            const f = e.target.files[0]; if (!f) return;
+            const r = new FileReader(); r.onload = async (ev) => {
+                await fetch('/api/update_avatar', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: currentUser.username, avatar: ev.target.result }) });
+                fetchDB();
+            }; r.readAsDataURL(f);
+        }
+
+        async function uploadStory(e) {
+            const f = e.target.files[0]; if (!f) return;
+            const r = new FileReader(); r.onload = async (ev) => {
+                await fetch('/api/story', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ author: currentUser.username, media: ev.target.result, mediaType: f.type }) });
+                fetchDB();
+            }; r.readAsDataURL(f);
+        }
+
+        function renderStories() {
+            const cont = document.getElementById('dynamicStories');
+            const active = globalDB.stories.filter(s => (Date.now() - s.timestamp) < 86400000 && (s.author === currentUser.username || currentUser.friends.includes(s.author)));
+            cont.innerHTML = active.map(s => `<div class="story" onclick="viewStory('${s.id}')">${s.mediaType.startsWith('image') ? `<img src="${s.media}">` : `<video src="${s.media}" muted></video>`}<div class="story-author">@${s.author}</div></div>`).join('');
+        }
+
+        function viewStory(id) {
+            const s = globalDB.stories.find(x => x.id === id);
+            document.getElementById('storyMediaContainer').innerHTML = s.mediaType.startsWith('image') ? `<img src="${s.media}" id="storyOverlayContent">` : `<video src="${s.media}" id="storyOverlayContent" controls autoplay></video>`;
+            document.getElementById('storyOverlay').style.display = 'flex';
+        }
+
+        function closeStory() { document.getElementById('storyOverlay').style.display = 'none'; }
+        function togglePostMenu(id) { document.getElementById(`post-menu-${id}`).classList.toggle('show'); }
+        async function reactPost(id, type) { await fetch('/api/react', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ postId:id, username: currentUser.username, type }) }); fetchDB(); }
+        async function addComment(id, cId) { const val = document.getElementById(`${cId}_comment_${id}`).value; await fetch('/api/comment', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ postId:id, author: currentUser.username, text: val }) }); fetchDB(); }
+        function toggleShortComments(id) { document.getElementById(`short-comments-${id}`).classList.toggle('open'); }
+        async function addShortComment(id) { const val = document.getElementById(`short-comment-input-${id}`).value; await fetch('/api/short_comment', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ shortId:id, author: currentUser.username, text: val }) }); fetchDB(); }
+        function playPauseShort(v) { if (v.paused) v.play(); else v.pause(); }
+        function copyLink(id) { alert("Link copied!"); }
+        function setProfileTab(t) { currentProfileTab = t; renderProfile(); }
+        
+        function renderProfile() {
+            document.getElementById('profName').innerText = currentUser.username;
+            const container = document.getElementById('profileContainer');
+            if (currentProfileTab === 'posts') {
+                renderPostList('profileContainer', globalDB.posts.filter(p => p.author === currentUser.username));
+            }
+        }
+
+        function renderChat() {
+            document.getElementById('chatUserList').innerHTML = currentUser.friends.map(f => `<div class="chat-user" onclick="openChat('${f}')">${f}</div>`).join('');
+        }
+        function openChat(u) { currentChatUser = u; document.getElementById('chatInput').disabled = false; document.getElementById('chatSendBtn').disabled = false; renderMessages(); }
+        async function sendMessage() { const val = document.getElementById('chatInput').value; await fetch('/api/message', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ from: currentUser.username, to: currentChatUser, text: val }) }); document.getElementById('chatInput').value = ''; fetchDB(); }
+        function renderMessages() {
+            const msgs = globalDB.messages.filter(m => (m.from === currentUser.username && m.to === currentChatUser) || (m.from === currentChatUser && m.to === currentUser.username));
+            document.getElementById('chatMessages').innerHTML = msgs.map(m => `<div class="msg ${m.from === currentUser.username ? 'sent' : 'recv'}">${m.text}</div>`).join('');
+        }
+    </script>
+</body>
+</html>
